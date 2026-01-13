@@ -1,0 +1,60 @@
+{
+  "name": "HMS_MQTT",
+  "version": "1.0.0",
+  "description": "Cross-platform MQTT client library for embedded systems.",
+  "keywords": [
+    "mqtt",
+    "iot",
+    "client",
+    "embedded",
+    "arduino",
+    "esp-idf",
+    "stm32",
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "authors": [
+    {
+      "name": "Hamas Saeed",
+      "email": "hamasaeed888@gmail.com",
+      "url": "https://github.com/Hamas888",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hamas888/HMS_MQTT.git"
+  },
+  "frameworks": ["arduino", "espidf"],
+  "platforms": ["atmelavr","espressif32", "ststm32", "nordicnrf52"],
+  "build": {
+    "flags": [
+      "-std=gnu++17"
+    ],
+    "unflags": [
+      "-std=gnu++11"
+    ]
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Hamas888/HMS_MQTT",
+  "examples": [
+    "examples"
+  ],
+  "export": {
+    "include": [
+      "src",
+      "include",
+      "examples",
+      "CMakeLists.txt",
+      "library.json",
+      "LICENSE",
+      "README.md"
+    ],
+    "exclude": [
+      "test",
+      ".pio",
+      ".vscode"
+    ]
+  }
+}

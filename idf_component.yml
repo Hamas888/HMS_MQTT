@@ -1,0 +1,32 @@
+dependencies:
+  idf: '>=5.0'
+  hamas888/chronolog: ^1.0.0
+description: 'Cross-platform MQTT Client library for embedded systems. Provides
+  connectivity management and messaging capabilities. Works on ESP-IDF,
+  STM32 HAL, Arduino, and Linux/Windows.
+
+  '
+issues: https://github.com/Hamas888/HMS_MQTT/issues
+license: MIT
+maintainers:
+- Hamas Saeed <hamasaeed888@gmail.com>
+repository: https://github.com/Hamas888/HMS_MQTT.git
+tags:
+- mqtt
+- client
+- embedded
+- esp-idf
+- rtos
+- iot
+- pub-sub
+- messaging
+- protocol
+- tcp
+- networking
+- cross-platform
+- aws 
+- azure
+- google-cloud
+- thingsboard
+url: https://github.com/Hamas888/HMS_MQTT
+version: 1.0.0
