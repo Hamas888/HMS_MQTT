@@ -1,4 +1,4 @@
-name: Release HMS_OLED Library
+name: Release HMS_MQTT Library
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
       # Step 4: Create a zip file named with the version
       - name: Create zip archive
         run: |
-          ZIP_NAME="HMS_OLED_v${{ steps.get_version.outputs.version }}.zip"
+          ZIP_NAME="HMS_MQTT_v${{ steps.get_version.outputs.version }}.zip"
           zip -r "$ZIP_NAME" src examples library.json README.md
           echo "zip_name=$ZIP_NAME" >> $GITHUB_ENV
 
@@ -49,7 +49,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: v${{ steps.get_version.outputs.version }}
           name: Release v${{ steps.get_version.outputs.version }}
-          body: HMS_OLED Library version v${{ steps.get_version.outputs.version }}
+          body: HMS_MQTT Library version v${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
           artifacts: ${{ env.zip_name }}
