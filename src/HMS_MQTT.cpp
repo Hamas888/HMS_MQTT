@@ -67,9 +67,14 @@ HMS_MQTT::HMS_MQTT(HMS_MQTT_Network_Mode networkMode) :
     #endif
     
     #if HMS_MQTT_DEBUG
+        const char* modeStr = "Unknown";
+        if (networkMode == HMS_MQTT_NETWORK_MODE_WIFI) modeStr = "WiFi";
+        else if (networkMode == HMS_MQTT_NETWORK_MODE_ETHERNET) modeStr = "Ethernet";
+        else if (networkMode == HMS_MQTT_NETWORK_MODE_GSM) modeStr = "GSM";
+
         mqttLogger->debug(
             "HMS_MQTT instance created with network mode: %s", 
-            (networkMode == HMS_MQTT_NETWORK_MODE_WIFI) ? "WiFi" : "Ethernet"
+            modeStr
         );
     #endif
 }

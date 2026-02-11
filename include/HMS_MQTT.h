@@ -173,6 +173,7 @@ typedef enum {
 typedef enum {
   HMS_MQTT_NETWORK_MODE_WIFI,
   HMS_MQTT_NETWORK_MODE_ETHERNET,
+  HMS_MQTT_NETWORK_MODE_GSM,
 } HMS_MQTT_Network_Mode;
 
 typedef enum {

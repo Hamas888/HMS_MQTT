@@ -382,6 +382,29 @@ HMS_MQTT_Status HMS_MQTT::checkNetworkInterface() {
         #endif
         networkAvailable = false;
         return HMS_MQTT_ERR_NETWORK_UNAVAILABLE;
+    } else if (networkMode == HMS_MQTT_NETWORK_MODE_GSM) {
+        // Check GSM (PPP) connectivity
+        esp_netif_t* netif = esp_netif_get_handle_from_ifkey("PPP_DEF");
+        if (netif) {
+            esp_netif_ip_info_t ip_info;
+            if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK && ip_info.ip.addr != 0) {
+                #if HMS_MQTT_DEBUG
+                    if (!networkAvailable) {
+                        mqttLogger->debug("GSM (PPP) connected and has IP address: " IPSTR, IP2STR(&ip_info.ip));
+                    }
+                #endif
+                networkAvailable = true;
+                return HMS_MQTT_OK;
+            }
+        }
+        
+        #if HMS_MQTT_DEBUG
+            if (networkAvailable) {
+                mqttLogger->debug("GSM (PPP) not connected or no IP address");
+            }
+        #endif
+        networkAvailable = false;
+        return HMS_MQTT_ERR_NETWORK_UNAVAILABLE;
     }
     
     return HMS_MQTT_ERR_NETWORK;
