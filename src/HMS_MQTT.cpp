@@ -29,18 +29,6 @@
 
 #include "HMS_MQTT.h"
 
-// #ifdef HMS_MQTT_PLATFORM_ESP_IDF
-// #include "esp_log.h"
-// #include "esp_system.h"
-// #include "esp_event.h"
-
-// #include "esp_mac.h"
-// #include "freertos/semphr.h"
-// #include "freertos/timers.h"
-// #include <cstring>
-// #include <algorithm>
-// #include <inttypes.h>
-
 #if HMS_MQTT_DEBUG
     ChronoLogger *mqttLogger = new ChronoLogger("HMS_MQTT", HMS_MQTT_LOG_LEVEL);
 #endif
@@ -366,6 +354,7 @@ void HMS_MQTT::handleMqttEvent(esp_mqtt_event_handle_t event) {
         case MQTT_EVENT_DATA:
             #if HMS_MQTT_DEBUG
             mqttLogger->debug("MQTT data received, topic=%.*s, payload length=%d", event->topic_len, event->topic, event->data_len);
+            mqttLogger->info("Incoming Message: %.*s", event->data_len, event->data);
             #endif
             messagesReceived++;
 
@@ -420,11 +409,10 @@ HMS_MQTT_Status HMS_MQTT::configure(HMS_MQTT_Client_Config& config) {
     }
 
     if(config.useTLS) {
-        if (config.caCert.empty() || config.clientCert.empty() || config.privateKey.empty()) {
+        if (config.caCert.empty()) {
             #if HMS_MQTT_DEBUG
-                mqttLogger->warn("TLS is enabled but one or more certificates are empty");
+                mqttLogger->warn("TLS is enabled but CA certificate is empty. Server verification will be skipped.");
             #endif
-            return HMS_MQTT_ERR_INVALID_CONFIG;
         }
     }
     

@@ -60,6 +60,7 @@
   #include <mqtt_client.h>
   #include <lwip/sockets.h>
   #include <freertos/task.h>
+  #include <esp_crt_bundle.h>
   #include <freertos/FreeRTOS.h>
   #define HMS_MQTT_PLATFORM_ESP_IDF
 #elif defined(__ZEPHYR__)

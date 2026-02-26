@@ -2,14 +2,6 @@
 
 #if defined(HMS_MQTT_PLATFORM_ESP_IDF)
 
-#include "esp_eth.h"
-#include "esp_wifi.h"
-#include "esp_netif.h"
-#include "lwip/inet.h"
-#include "lwip/netdb.h"
-#include "lwip/sockets.h"
-
-
 void HMS_MQTT::mqttTaskLoop() {
     #if HMS_MQTT_DEBUG
     mqttLogger->info("MQTT task started");
@@ -269,7 +261,14 @@ HMS_MQTT_Status HMS_MQTT::setupMqttConfig() {
     if (config.useTLS) {                                                                 // TLS Configuration
         if (!config.caCert.empty()) {
             mqttConfig.broker.verification.certificate = config.caCert.c_str();
+        } else {
+            /* 
+                Use standard ESP-IDF certificate bundle if no specific CA cert is provided
+                This allows connecting to services like HiveMQ Cloud using their public certs 
+            */
+            mqttConfig.broker.verification.crt_bundle_attach = esp_crt_bundle_attach;
         }
+        
         if (!config.clientCert.empty()) {
             mqttConfig.credentials.authentication.certificate = config.clientCert.c_str();
         }
