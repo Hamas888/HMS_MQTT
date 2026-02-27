@@ -1,6 +1,6 @@
 dependencies:
   idf: '>=5.0'
-  hamas888/chronolog: ^1.0.0
+  hamas888/chronolog: ^1.0.1
 description: 'Cross-platform MQTT Client library for embedded systems. Provides
   connectivity management and messaging capabilities. Works on ESP-IDF,
   STM32 HAL, Arduino, and Linux/Windows.

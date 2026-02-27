@@ -1,6 +1,6 @@
 # HMS_MQTT/CMakeLists.txt
 
-set(HMS_MQTT_VERSION 1.0.0)
+set(HMS_MQTT_VERSION 1.0.1)
 
 # Check if we're building with Zephyr
 if(DEFINED ZEPHYR_BASE)
