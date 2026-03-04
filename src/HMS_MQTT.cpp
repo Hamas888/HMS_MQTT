@@ -30,7 +30,7 @@
 #include "HMS_MQTT.h"
 
 #if HMS_MQTT_DEBUG
-    ChronoLogger *mqttLogger = new ChronoLogger("HMS_MQTT", HMS_MQTT_LOG_LEVEL);
+    ChronoLogger *mqttLogger = nullptr;
 #endif
 
 
@@ -47,6 +47,12 @@ HMS_MQTT::HMS_MQTT(HMS_MQTT_Network_Mode networkMode) :
     brokerUri(""),
     networkMode(networkMode), 
     connectionState(HMS_MQTT_STATE_DISCONNECTED) {
+
+    #if HMS_MQTT_DEBUG
+        if (mqttLogger == nullptr) {
+            mqttLogger = new ChronoLogger("HMS_MQTT", HMS_MQTT_LOG_LEVEL);
+        }
+    #endif
 
     #if defined(HMS_MQTT_PLATFORM_ESP_IDF)
         mqttClient = nullptr;

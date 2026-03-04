@@ -166,6 +166,11 @@ typedef enum {
 } HMS_MQTT_Connection_State;
 
 typedef enum {
+  HMS_MQTT_VERSION_3_1_1 = 0,
+  HMS_MQTT_VERSION_5_0   = 1,
+} HMS_MQTT_Version;
+
+typedef enum {
   HMS_MQTT_QOS_0 = 0,
   HMS_MQTT_QOS_1 = 1,
   HMS_MQTT_QOS_2 = 2,
@@ -207,7 +212,7 @@ typedef struct {
   uint16_t                    reconnectTimeoutMs              = HMS_MQTT_DEFAULT_RECONNECT_TIMEOUT;
   uint16_t                    networkTimeoutMs                = HMS_MQTT_DEFAULT_NETWORK_TIMEOUT;
   uint16_t                    networkCheckIntervalMs          = HMS_MQTT_DEFAULT_NETWORK_CHECK_INTERVAL;                                              // How often to check network connectivity
-  uint16_t                    networkCheckTimeoutMs           = HMS_MQTT_NETWORK_CHECK_TIMEOUT;                                                      // Timeout for network connectivity checks
+  uint16_t                    networkCheckTimeoutMs           = HMS_MQTT_NETWORK_CHECK_TIMEOUT;                                                       // Timeout for network connectivity checks
   uint32_t                    taskStackSize                   = HMS_MQTT_DEFAULT_TASK_STACK_SIZE;
   uint8_t                     taskPriority                    = HMS_MQTT_DEFAULT_TASK_PRIORITY;
   std::string                 brokerEndpoint                  = "";
@@ -221,7 +226,10 @@ typedef struct {
   std::string                 caCert                          = "";
   std::string                 privateKey                      = "";
   std::string                 clientCert                      = "";
+  std::string                 alpn                            = "";                                                                                  // ALPN protocols (e.g., "x-amzn-mqtt-ca" for AWS IoT)
+  std::string                 sni                             = "";                                                                                  // Server Name Indication
   std::string                 internetCheckHost               = HMS_MQTT_INTERNET_CHECK_HOST;                                                        // Host to ping for internet connectivity check
+  HMS_MQTT_Version            mqttVersion                     = HMS_MQTT_VERSION_3_1_1;
   HMS_MQTT_QoS                lwtQoS                          = HMS_MQTT_QOS_0;
   HMS_MQTT_QoS                pubQoS                          = HMS_MQTT_QOS_0;
   HMS_MQTT_QoS                subQoS                          = HMS_MQTT_QOS_0;
@@ -270,32 +278,30 @@ class HMS_MQTT {
     uint32_t                    lastNetworkCheck;                                                                                                      // Last time network was checked
     std::string                 brokerUri;
     HMS_MQTT_Network_Mode       networkMode;
-    HMS_MQTT_Connection_State   connectionState;
     HMS_MQTT_Client_Config      config;
+    HMS_MQTT_Connection_State   connectionState;
 
+    void mqttDelay(uint32_t ms);
+    uint32_t systemMillis() const;
+    std::string generateClientId();
+
+    HMS_MQTT_Status connect();
+    HMS_MQTT_Status disconnect();
     HMS_MQTT_Status stopMqttTask();
     HMS_MQTT_Status startMqttTask();
     HMS_MQTT_Status setupMqttConfig();
     HMS_MQTT_Status initializePlatform();
     HMS_MQTT_Status deinitializePlatform();
 
-    // Network connectivity methods
+    bool shouldCheckNetwork() const;                                                                                                                   // Network connectivity methods
+    HMS_MQTT_Status performNetworkCheck();
     HMS_MQTT_Status checkNetworkInterface();
     HMS_MQTT_Status checkInternetConnectivity();
-    HMS_MQTT_Status performNetworkCheck();
-    bool shouldCheckNetwork() const;
-
+    
     void mqttTaskLoop();
     void handleMqttEvent(esp_mqtt_event_handle_t event);
     void updateConnectionState(HMS_MQTT_Connection_State newState);
     void notifyEvent(HMS_MQTT_Event_Type event, const char* info = nullptr);
-
-    HMS_MQTT_Status connect();
-    HMS_MQTT_Status disconnect();
-
-    void mqttDelay(uint32_t ms);
-    uint32_t systemMillis() const;
-    std::string generateClientId();
 
     HMS_MQTT_Status unsubscribe(const char* topic);
     HMS_MQTT_Status subscribe(const char* topic, HMS_MQTT_QoS qos = HMS_MQTT_QOS_0);
@@ -308,6 +314,11 @@ class HMS_MQTT {
       TaskHandle_t                mqttTaskHandle;
     
       static void mqttEventHandler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data);
+     
+      HMS_MQTT_Status publishWithProperties(
+        const char* topic, const char* payload, const std::string* userPropertiesKeys, const std::string* userPropertiesValues, size_t propertyCount, 
+        HMS_MQTT_QoS qos = HMS_MQTT_QOS_0, bool retain = false
+      );                                                                                                                                               // MQTT 5.0 Properties support
     #endif
 };
 

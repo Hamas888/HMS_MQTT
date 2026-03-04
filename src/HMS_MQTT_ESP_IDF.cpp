@@ -241,6 +241,12 @@ HMS_MQTT_Status HMS_MQTT::setupMqttConfig() {
     mqttConfig.network.reconnect_timeout_ms      = config.reconnectTimeoutMs;
     mqttConfig.network.disable_auto_reconnect    = !config.autoReconnect;
 
+    if (config.mqttVersion == HMS_MQTT_VERSION_5_0) {                                    // MQTT protocol version
+        mqttConfig.session.protocol_ver = MQTT_PROTOCOL_V_5;
+    } else {
+        mqttConfig.session.protocol_ver = MQTT_PROTOCOL_V_3_1_1;
+    }
+
 
     mqttConfig.credentials.client_id = config.clientId.c_str();                          // Client credentials
     if (!config.username.empty()) {
@@ -275,6 +281,15 @@ HMS_MQTT_Status HMS_MQTT::setupMqttConfig() {
         if (!config.privateKey.empty()) {
             mqttConfig.credentials.authentication.key = config.privateKey.c_str();
         }
+
+        if (!config.alpn.empty()) {                                                      // ALPN and SNI
+            const char* alpn_protos[] = { config.alpn.c_str(), NULL };
+            mqttConfig.broker.verification.alpn_protos = alpn_protos;
+        }
+        if (!config.sni.empty()) {
+            mqttConfig.broker.verification.common_name = config.sni.c_str();
+        }
+
         mqttConfig.broker.verification.skip_cert_common_name_check = false;
     }
     
@@ -317,14 +332,12 @@ HMS_MQTT_Status HMS_MQTT::deinitializePlatform() {
 }
 
 HMS_MQTT_Status HMS_MQTT::checkNetworkInterface() {
-    if (networkMode == HMS_MQTT_NETWORK_MODE_WIFI) {
-        // Check WiFi connectivity
+    if (networkMode == HMS_MQTT_NETWORK_MODE_WIFI) {                                     // Check WiFi connectivity
         wifi_ap_record_t ap_info;
         esp_err_t err = esp_wifi_sta_get_ap_info(&ap_info);
         if (err == ESP_OK) {
-            // Check if we have an IP address
             esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-            if (netif) {
+            if (netif) {                                                                 // Check if we have an IP address
                 esp_netif_ip_info_t ip_info;
                 if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK && ip_info.ip.addr != 0) {
                     #if HMS_MQTT_DEBUG
@@ -347,12 +360,10 @@ HMS_MQTT_Status HMS_MQTT::checkNetworkInterface() {
         return HMS_MQTT_ERR_NETWORK_UNAVAILABLE;
         
     } else if (networkMode == HMS_MQTT_NETWORK_MODE_ETHERNET) {
-        // Check Ethernet connectivity
         esp_netif_t* netif = esp_netif_get_handle_from_ifkey("ETH_DEF");
-        if (!netif) {
-            // Fallback: find any ethernet netif
+        if (!netif) {                                                                    // Check Ethernet connectivity
             netif = esp_netif_next_unsafe(NULL);
-            while (netif) {
+            while (netif) {                                                              // Fallback: find any ethernet netif
                 const char* ifkey = esp_netif_get_ifkey(netif);
                 if (ifkey && strstr(ifkey, "ETH")) {
                     break;
@@ -382,9 +393,8 @@ HMS_MQTT_Status HMS_MQTT::checkNetworkInterface() {
         networkAvailable = false;
         return HMS_MQTT_ERR_NETWORK_UNAVAILABLE;
     } else if (networkMode == HMS_MQTT_NETWORK_MODE_GSM) {
-        // Check GSM (PPP) connectivity
         esp_netif_t* netif = esp_netif_get_handle_from_ifkey("PPP_DEF");
-        if (netif) {
+        if (netif) {                                                                     // Check GSM (PPP) connectivity
             esp_netif_ip_info_t ip_info;
             if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK && ip_info.ip.addr != 0) {
                 #if HMS_MQTT_DEBUG
@@ -542,6 +552,60 @@ HMS_MQTT_Status HMS_MQTT::publish(const char* topic, const uint8_t* payload, siz
         mqttLogger->debug("Published to topic: %s, msg_id: %d", topic, msg_id);
     #endif
     
+    return HMS_MQTT_OK;
+}
+
+HMS_MQTT_Status HMS_MQTT::publishWithProperties(const char* topic, const char* payload, const std::string* userPropertiesKeys, const std::string* userPropertiesValues, size_t propertyCount, HMS_MQTT_QoS qos, bool retain) {
+    if (!topic || !payload) {
+        return HMS_MQTT_ERR_PUBLISH;
+    }
+    
+    if (config.mqttVersion != HMS_MQTT_VERSION_5_0) {
+        #if HMS_MQTT_DEBUG
+            mqttLogger->error("Cannot publish with properties: MQTT 5.0 not enabled");
+        #endif
+        return HMS_MQTT_ERR_INVALID_CONFIG;
+    }
+
+    if (!isConnected()) {
+        #if HMS_MQTT_DEBUG
+            mqttLogger->debug("Cannot publish: not connected");
+        #endif
+        return HMS_MQTT_ERR_CONNECT;
+    }
+
+    esp_mqtt5_publish_property_config_t prop_cfg;
+    memset(&prop_cfg, 0, sizeof(prop_cfg));
+    
+    esp_mqtt5_user_property_item_t* user_props = nullptr;
+    if (propertyCount > 0 && userPropertiesKeys && userPropertiesValues) {
+        user_props = new esp_mqtt5_user_property_item_t[propertyCount];
+        for (size_t i = 0; i < propertyCount; i++) {
+            user_props[i].key = userPropertiesKeys[i].c_str();
+            user_props[i].value = userPropertiesValues[i].c_str();
+        }
+        prop_cfg.user_property = user_props;
+        prop_cfg.user_property_count = propertyCount;
+    }
+
+    int msg_id = esp_mqtt5_client_publish_with_property(mqttClient, topic, payload, strlen(payload), qos, retain, &prop_cfg);
+
+    if (user_props) {
+        delete[] user_props;
+    }
+
+    if (msg_id == -1) {
+        #if HMS_MQTT_DEBUG
+            mqttLogger->error("Failed to publish with properties to topic: %s", topic);
+        #endif
+        return HMS_MQTT_ERR_PUBLISH;
+    }
+    
+    #if HMS_MQTT_DEBUG
+        mqttLogger->info("Published with properties to topic: %s, msg_id: %d", topic, msg_id);
+    #endif
+    
+    messagesPublished++;
     return HMS_MQTT_OK;
 }
 
